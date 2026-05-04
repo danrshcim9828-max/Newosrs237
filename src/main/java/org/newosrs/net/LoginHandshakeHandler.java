@@ -6,7 +6,6 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.CorruptedFrameException;
 import org.newosrs.protocol.LoginResponseCode;
-import org.newosrs.protocol.ProtocolOpcodes;
 import org.newosrs.protocol.RevisionHandshake;
 import org.newosrs.protocol.login.LoginRequestDecoder;
 import org.newosrs.service.LoginService;
@@ -15,10 +14,14 @@ import org.newosrs.session.SessionState;
 
 public final class LoginHandshakeHandler extends ChannelInboundHandlerAdapter {
     private final int revision;
+    private final int handshakeOpcode;
+    private final int loginOpcode;
     private final LoginService loginService = new LoginService();
 
-    public LoginHandshakeHandler(int revision) {
+    public LoginHandshakeHandler(int revision, int handshakeOpcode, int loginOpcode) {
         this.revision = revision;
+        this.handshakeOpcode = handshakeOpcode;
+        this.loginOpcode = loginOpcode;
     }
 
     @Override
@@ -30,7 +33,6 @@ public final class LoginHandshakeHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf in = (ByteBuf) msg;
         SessionContext session = ctx.channel().attr(NetAttributes.SESSION).get();
-
         try {
             switch (session.state()) {
                 case HANDSHAKE -> handleHandshake(ctx, in, session);
@@ -55,9 +57,8 @@ public final class LoginHandshakeHandler extends ChannelInboundHandlerAdapter {
         if (in.readableBytes() < 3) {
             throw new CorruptedFrameException("Handshake requires opcode + 2-byte revision");
         }
-
         int opcode = in.readUnsignedByte();
-        if (opcode != ProtocolOpcodes.HANDSHAKE) {
+        if (opcode != handshakeOpcode) {
             throw new CorruptedFrameException("Unsupported handshake opcode: " + opcode);
         }
 
@@ -77,7 +78,7 @@ public final class LoginHandshakeHandler extends ChannelInboundHandlerAdapter {
     }
 
     private void handleLogin(ChannelHandlerContext ctx, ByteBuf in, SessionContext session) {
-        var request = LoginRequestDecoder.decode(in);
+        var request = LoginRequestDecoder.decode(in, loginOpcode);
         if (loginService.authenticate(request)) {
             session.setUsername(request.username().trim());
             session.setState(SessionState.INGAME);

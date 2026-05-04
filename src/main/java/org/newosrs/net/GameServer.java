@@ -24,7 +24,7 @@ public final class GameServer {
         ServerBootstrap bootstrap = new ServerBootstrap()
                 .group(boss, worker)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new LoginChannelInitializer(config.revision()));
+                .childHandler(new LoginChannelInitializer(config.revision(), config.handshakeOpcode(), config.loginOpcode()));
 
         boundChannel = bootstrap.bind(config.host(), config.port()).sync().channel();
     }

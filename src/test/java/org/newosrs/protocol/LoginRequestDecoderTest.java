@@ -12,11 +12,11 @@ final class LoginRequestDecoderTest {
     @Test
     void decodesLengthPrefixedCredentials() {
         var buf = Unpooled.buffer();
-        buf.writeByte(ProtocolOpcodes.LOGIN_INIT);
+        buf.writeByte(16);
         buf.writeByte(5).writeBytes("alice".getBytes());
         buf.writeByte(8).writeBytes("s3cr3t!!".getBytes());
 
-        var req = LoginRequestDecoder.decode(buf);
+        var req = LoginRequestDecoder.decode(buf, 16);
         assertEquals("alice", req.username());
         assertEquals("s3cr3t!!", req.password());
     }
@@ -26,24 +26,24 @@ final class LoginRequestDecoderTest {
         var buf = Unpooled.buffer();
         buf.writeByte(99).writeByte(0).writeByte(0);
 
-        assertThrows(CorruptedFrameException.class, () -> LoginRequestDecoder.decode(buf));
+        assertThrows(CorruptedFrameException.class, () -> LoginRequestDecoder.decode(buf, 16));
     }
 
     @Test
     void rejectsMissingFieldBytes() {
         var buf = Unpooled.buffer();
-        buf.writeByte(ProtocolOpcodes.LOGIN_INIT);
+        buf.writeByte(16);
         buf.writeByte(5).writeBytes("abc".getBytes());
 
-        assertThrows(CorruptedFrameException.class, () -> LoginRequestDecoder.decode(buf));
+        assertThrows(CorruptedFrameException.class, () -> LoginRequestDecoder.decode(buf, 16));
     }
 
     @Test
     void rejectsOverlongField() {
         var buf = Unpooled.buffer();
-        buf.writeByte(ProtocolOpcodes.LOGIN_INIT);
+        buf.writeByte(16);
         buf.writeByte(65);
 
-        assertThrows(CorruptedFrameException.class, () -> LoginRequestDecoder.decode(buf));
+        assertThrows(CorruptedFrameException.class, () -> LoginRequestDecoder.decode(buf, 16));
     }
 }

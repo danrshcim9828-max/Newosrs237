@@ -12,6 +12,12 @@ Revision-237 RSPS server framework with a working login/session pipeline and det
 - 600ms game tick executor.
 - Cache file indexing at startup.
 
+
+## Protocol Source of Truth
+- Current defaults are a **local rev237 profile** in this repository.
+- RSProt/RuneLite protocol generation is **not yet vendored** in this project.
+- Use `config/server.json` to override handshake/login opcodes if your verified client build differs.
+
 ## Protocol Contract (current)
 1. Client sends handshake packet:
    - `u8 opcode` = `15`
